@@ -14,13 +14,14 @@ import conf
 
 class Owlet(object):
     
-    def __init__(self, name, endpoint, username, password, client_cert,
+    def __init__(self, name, endpoint, username, password, client_cert, verify_cert,
                  app_names, metrics, cities, districts, streets, devices):
         self.name = name
         self.endpoint = endpoint
         self.username = username
         self.password = password
         self.client_cert = client_cert
+        self.verify_cert = verify_cert
         self.__app_names = app_names
         self.__metrics = metrics
         self.__cities = cities
@@ -114,7 +115,7 @@ def catch_exception(message, runnable, *args, **kwargs):
 
 
 def main():
-    api = Owlet(conf.name, conf.endpoint, conf.username, conf.password, conf.client_cert,
+    api = Owlet(conf.name, conf.endpoint, conf.username, conf.password, conf.client_cert, conf.verify_cert,
                 conf.app_names, conf.metrics, conf.cities, conf.districts, conf.streets, conf.devices)
     
     while True:
