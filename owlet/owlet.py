@@ -9,7 +9,8 @@ import requests
 
 import requests.packages.urllib3
 requests.packages.urllib3.disable_warnings()
-import .conf
+
+import conf
 
 class Owlet(object):
     
