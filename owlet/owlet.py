@@ -78,6 +78,10 @@ class Owlet(object):
                             print '__metrics not defined correctly. Ignore it.' % (metric_id)
                             continue
                         
+                        function = metric.get('func')
+                        if function is not None:
+                            value = function(value)
+                        
                         metric_name = '%s-%s' % (self.__app_names.get(app_id),
                                                  metric.get('name'))
                         
