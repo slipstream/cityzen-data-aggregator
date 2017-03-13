@@ -56,7 +56,8 @@ class Owlet(object):
                 district = district_street[:3]
                 street = district_street[3:]
 
-                name = '.'.join([country, 
+                name = '.'.join([self.name,
+                                 country, 
                                  self.__cities.get(city, city), 
                                  self.__districts.get(district, district), 
                                  self.__streets.get(street, street), 
