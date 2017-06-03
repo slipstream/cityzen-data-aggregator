@@ -23,8 +23,7 @@ import conf
 def is_number(x, boolean=True):
     '''
     Check if x is a number (int, float, ...).
-    This function doesn't parse number in strings.
-    If boolean is set to True boolean will be considered as number
+    If 'boolean' is set to True boolean will be considered as number
     '''
     if not boolean and isinstance(x, bool):
         return False
@@ -35,19 +34,19 @@ class EcoWasteAPI(requests.Session):
 
     def __init__(self, endpoint, username, password, client_identifier, verify_cert=True):
         super(EcoWasteAPI, self).__init__()
-        
+
         self.endpoint = endpoint
         self.username = username
         self.password = password
         self.client_identifier = client_identifier
-        
+
         self.token_expiry_date = None
-        
+
         self.verify = verify_cert
         self.headers = {'Accept': 'application/json'}
-        
+
         self.__token = None
-        
+
     def request(self, *args, **kwargs):
         super_request = super(EcoWasteAPI, self).request
 
@@ -64,7 +63,7 @@ class EcoWasteAPI(requests.Session):
             response = super_request(*args, **kwargs)
 
         return response
-        
+
     @property
     def token(self):
         if self.__token is None or self.is_token_expired():
@@ -81,30 +80,30 @@ class EcoWasteAPI(requests.Session):
 
     def authenticate(self):
         uri = '/ipServer/wise/public/api/authentification/requestToken'
-        
+
         headers = {'Accept': 'application/json',
                    'Content-Type': 'application/json'}
-                   
+
         auth = auth=HTTPBasicAuth(self.username, self.password)
-                  
-        data = {'applicationName': 'WISE', 
+
+        data = {'applicationName': 'WISE',
                 'clientIdentifier': self.client_identifier}
-                
-        response = requests.post('{}{}'.format(self.endpoint, uri), headers=headers, 
+
+        response = requests.post('{}{}'.format(self.endpoint, uri), headers=headers,
                                  auth=auth, data=json.dumps(data), verify=self.verify)
         response.raise_for_status()
 
         response_json = response.json()
 
         self.token = response_json.get('access_token')
-        
+
         expires_in = response_json.get('expires_in')
         if expires_in:
             self.token_expiry_date = datetime.now() + timedelta(seconds=expires_in)
-        
+
 
 class EcoWaste(object):
-    
+
     def __init__(self, name, endpoint, username, password, client_identifier,
                  country, city, weight_flows, verify_cert=True):
         self.name = name
@@ -113,7 +112,7 @@ class EcoWaste(object):
         self.city = city
         self.weight_flows = weight_flows
         self.api = EcoWasteAPI(endpoint, username, password, client_identifier, verify_cert)
-    
+
     def _get_data(self, resource, *args, **kwargs):
         response = self.api.get(self.endpoint + '/ipServer/wise/api/dashboards/' + resource, *args, **kwargs)
         data = response.json()
@@ -142,7 +141,7 @@ class EcoWaste(object):
 
     def get_communication(self):
         return self._get_data('communication')
-    
+
     def get_level(self):
         return self._get_data('level')
 
@@ -153,14 +152,14 @@ class EcoWaste(object):
     def get_metrics(self):
         metrics = {}
         metrics_prefix = '{}.{}.{}'.format(self.name, self.country, self.city)
-        
+
         for name, flow_type_id in self.weight_flows.items():
             metrics.update(self._extract_metrics(metrics_prefix + '.weight-' + name, self.get_weight(flow_type_id)[0]))
-            
+
         metrics.update(self._extract_metrics(metrics_prefix + '.equipment', self.get_equipement()))
         metrics.update(self._extract_metrics(metrics_prefix + '.communication', self.get_communication()))
         metrics.update(self._extract_metrics(metrics_prefix + '.level', self.get_level()))
-        
+
         return metrics
 
 
@@ -168,12 +167,12 @@ def send_metrics(metrics):
     if metrics is None:
         print 'No metric to send'
         return
-    
+
     metrics_data = ''
     for name, value in metrics.items():
         print name, '=', value
         metrics_data += '%s %s %s\n' % (name, value, int(time.time()))
-    
+
     if metrics_data:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(5)
@@ -194,12 +193,12 @@ def catch_exception(message, runnable, *args, **kwargs):
 def main():
     api = EcoWaste(conf.name, conf.endpoint, conf.username, conf.password, conf.client_identifier,
                    conf.country, conf.city, conf.weight_flows, conf.verify_cert)
-    
+
     while True:
         t = time.time()
         metrics = catch_exception('Failed to get metrics: %s', api.get_metrics)
         catch_exception('Failed to send metrics: %s', send_metrics, metrics)
-        
+
         sleep = 60 - (time.time() - t)
         if sleep > 0:
             time.sleep(sleep)
@@ -208,5 +207,4 @@ def main():
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     exit(main())
-
 
