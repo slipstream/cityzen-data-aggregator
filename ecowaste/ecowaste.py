@@ -60,6 +60,7 @@ class EcoWasteAPI(requests.Session):
         response = super_request(*args, **kwargs)
         if response.status_code == 401:
             self.authenticate()
+            kwargs['headers']['X-Client-Token'] = self.token
             response = super_request(*args, **kwargs)
 
         return response
@@ -207,4 +208,5 @@ def main():
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     exit(main())
+
 
